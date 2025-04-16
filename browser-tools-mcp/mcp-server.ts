@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import path from "path";
-import fs from "fs";
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import path from 'path';
+import fs from 'fs';
 
 // Create the MCP server
 const server = new McpServer({
-  name: "Browser Tools MCP",
-  version: "1.2.0",
+  name: 'Browser Tools MCP',
+  version: '1.2.0',
 });
 
 // Track the discovered server connection
-let discoveredHost = "127.0.0.1";
+let discoveredHost = '127.0.0.1';
 let discoveredPort = 3025;
 let serverDiscovered = false;
 
@@ -28,15 +28,15 @@ function getDefaultServerPort(): number {
 
   // Try to read from .port file
   try {
-    const portFilePath = path.join(__dirname, ".port");
+    const portFilePath = path.join(__dirname, '.port');
     if (fs.existsSync(portFilePath)) {
-      const port = parseInt(fs.readFileSync(portFilePath, "utf8").trim(), 10);
+      const port = parseInt(fs.readFileSync(portFilePath, 'utf8').trim(), 10);
       if (!isNaN(port) && port > 0) {
         return port;
       }
     }
   } catch (err) {
-    console.error("Error reading port file:", err);
+    console.error('Error reading port file:', err);
   }
 
   // Default port if no configuration found
@@ -51,15 +51,15 @@ function getDefaultServerHost(): string {
   }
 
   // Default to localhost
-  return "127.0.0.1";
+  return '127.0.0.1';
 }
 
 // Server discovery function - similar to what you have in the Chrome extension
 async function discoverServer(): Promise<boolean> {
-  console.log("Starting server discovery process");
+  console.log('Starting server discovery process');
 
   // Common hosts to try
-  const hosts = [getDefaultServerHost(), "127.0.0.1", "localhost"];
+  const hosts = [getDefaultServerHost(), '127.0.0.1', 'localhost'];
 
   // Ports to try (start with default, then try others)
   const defaultPort = getDefaultServerPort();
@@ -72,8 +72,8 @@ async function discoverServer(): Promise<boolean> {
     }
   }
 
-  console.log(`Will try hosts: ${hosts.join(", ")}`);
-  console.log(`Will try ports: ${ports.join(", ")}`);
+  console.log(`Will try hosts: ${hosts.join(', ')}`);
+  console.log(`Will try ports: ${ports.join(', ')}`);
 
   // Try to find the server
   for (const host of hosts) {
@@ -90,7 +90,7 @@ async function discoverServer(): Promise<boolean> {
           const identity = await response.json();
 
           // Verify this is actually our server by checking the signature
-          if (identity.signature === "mcp-browser-connector-24x7") {
+          if (identity.signature === 'mcp-browser-connector-24x7') {
             console.log(`Successfully found server at ${host}:${port}`);
 
             // Save the discovered connection
@@ -108,7 +108,7 @@ async function discoverServer(): Promise<boolean> {
     }
   }
 
-  console.error("No server found during discovery");
+  console.error('No server found during discovery');
   return false;
 }
 
@@ -123,7 +123,7 @@ async function withServerConnection<T>(
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: "Failed to discover browser connector server. Please ensure it's running.",
           },
         ],
@@ -143,7 +143,7 @@ async function withServerConnection<T>(
     serverDiscovered = false;
 
     if (await discoverServer()) {
-      console.error("Rediscovery successful. Retrying API call...");
+      console.error('Rediscovery successful. Retrying API call...');
       try {
         // Retry the API call with the newly discovered connection
         return await apiCall();
@@ -152,7 +152,7 @@ async function withServerConnection<T>(
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: `Error after reconnection attempt: ${retryError.message}`,
             },
           ],
@@ -160,11 +160,11 @@ async function withServerConnection<T>(
         };
       }
     } else {
-      console.error("Rediscovery failed. Could not reconnect to server.");
+      console.error('Rediscovery failed. Could not reconnect to server.');
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: `Failed to reconnect to server: ${error.message}`,
           },
         ],
@@ -175,7 +175,7 @@ async function withServerConnection<T>(
 }
 
 // We'll define our tools that retrieve data from the browser connector
-server.tool("getConsoleLogs", "Check our browser logs", async () => {
+server.tool('getConsoleLogs', 'Check our browser logs', async () => {
   return await withServerConnection(async () => {
     const response = await fetch(
       `http://${discoveredHost}:${discoveredPort}/console-logs`
@@ -184,7 +184,7 @@ server.tool("getConsoleLogs", "Check our browser logs", async () => {
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: JSON.stringify(json, null, 2),
         },
       ],
@@ -193,8 +193,8 @@ server.tool("getConsoleLogs", "Check our browser logs", async () => {
 });
 
 server.tool(
-  "getConsoleErrors",
-  "Check our browsers console errors",
+  'getConsoleErrors',
+  'Check our browsers console errors',
   async () => {
     return await withServerConnection(async () => {
       const response = await fetch(
@@ -204,7 +204,7 @@ server.tool(
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(json, null, 2),
           },
         ],
@@ -213,7 +213,7 @@ server.tool(
   }
 );
 
-server.tool("getNetworkErrors", "Check our network ERROR logs", async () => {
+server.tool('getNetworkErrors', 'Check our network ERROR logs', async () => {
   return await withServerConnection(async () => {
     const response = await fetch(
       `http://${discoveredHost}:${discoveredPort}/network-errors`
@@ -222,7 +222,7 @@ server.tool("getNetworkErrors", "Check our network ERROR logs", async () => {
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: JSON.stringify(json, null, 2),
         },
       ],
@@ -231,7 +231,7 @@ server.tool("getNetworkErrors", "Check our network ERROR logs", async () => {
   });
 });
 
-server.tool("getNetworkLogs", "Check ALL our network logs", async () => {
+server.tool('getNetworkLogs', 'Check ALL our network logs', async () => {
   return await withServerConnection(async () => {
     const response = await fetch(
       `http://${discoveredHost}:${discoveredPort}/network-success`
@@ -240,7 +240,7 @@ server.tool("getNetworkLogs", "Check ALL our network logs", async () => {
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: JSON.stringify(json, null, 2),
         },
       ],
@@ -249,15 +249,15 @@ server.tool("getNetworkLogs", "Check ALL our network logs", async () => {
 });
 
 server.tool(
-  "takeScreenshot",
-  "Take a screenshot of the current browser tab",
+  'takeScreenshot',
+  'Take a screenshot of the current browser tab',
   async () => {
     return await withServerConnection(async () => {
       try {
         const response = await fetch(
           `http://${discoveredHost}:${discoveredPort}/capture-screenshot`,
           {
-            method: "POST",
+            method: 'POST',
           }
         );
 
@@ -267,8 +267,8 @@ server.tool(
           return {
             content: [
               {
-                type: "text",
-                text: "Successfully saved screenshot",
+                type: 'text',
+                text: 'Successfully saved screenshot',
               },
             ],
           };
@@ -276,7 +276,7 @@ server.tool(
           return {
             content: [
               {
-                type: "text",
+                type: 'text',
                 text: `Error taking screenshot: ${result.error}`,
               },
             ],
@@ -288,7 +288,7 @@ server.tool(
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: `Failed to take screenshot: ${errorMessage}`,
             },
           ],
@@ -299,8 +299,8 @@ server.tool(
 );
 
 server.tool(
-  "getSelectedElement",
-  "Get the selected element from the browser",
+  'getSelectedElement',
+  'Get the selected element from the browser',
   async () => {
     return await withServerConnection(async () => {
       const response = await fetch(
@@ -310,7 +310,7 @@ server.tool(
       return {
         content: [
           {
-            type: "text",
+            type: 'text',
             text: JSON.stringify(json, null, 2),
           },
         ],
@@ -319,19 +319,19 @@ server.tool(
   }
 );
 
-server.tool("wipeLogs", "Wipe all browser logs from memory", async () => {
+server.tool('wipeLogs', 'Wipe all browser logs from memory', async () => {
   return await withServerConnection(async () => {
     const response = await fetch(
       `http://${discoveredHost}:${discoveredPort}/wipelogs`,
       {
-        method: "POST",
+        method: 'POST',
       }
     );
     const json = await response.json();
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: json.message,
         },
       ],
@@ -341,17 +341,17 @@ server.tool("wipeLogs", "Wipe all browser logs from memory", async () => {
 
 // Define audit categories as enum to match the server's AuditCategory enum
 enum AuditCategory {
-  ACCESSIBILITY = "accessibility",
-  PERFORMANCE = "performance",
-  SEO = "seo",
-  BEST_PRACTICES = "best-practices",
-  PWA = "pwa",
+  ACCESSIBILITY = 'accessibility',
+  PERFORMANCE = 'performance',
+  SEO = 'seo',
+  BEST_PRACTICES = 'best-practices',
+  PWA = 'pwa',
 }
 
 // Add tool for accessibility audits, launches a headless browser instance
 server.tool(
-  "runAccessibilityAudit",
-  "Run an accessibility audit on the current page",
+  'runAccessibilityAudit',
+  'Run an accessibility audit on the current page',
   {},
   async () => {
     return await withServerConnection(async () => {
@@ -363,14 +363,14 @@ server.tool(
         const response = await fetch(
           `http://${discoveredHost}:${discoveredPort}/accessibility-audit`,
           {
-            method: "POST",
+            method: 'POST',
             headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
             },
             body: JSON.stringify({
               category: AuditCategory.ACCESSIBILITY,
-              source: "mcp_tool",
+              source: 'mcp_tool',
               timestamp: Date.now(),
             }),
           }
@@ -398,7 +398,7 @@ server.tool(
           return {
             content: [
               {
-                type: "text",
+                type: 'text',
                 text: JSON.stringify(flattened, null, 2),
               },
             ],
@@ -408,7 +408,7 @@ server.tool(
           return {
             content: [
               {
-                type: "text",
+                type: 'text',
                 text: JSON.stringify(json, null, 2),
               },
             ],
@@ -417,11 +417,11 @@ server.tool(
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        console.error("Error in accessibility audit:", errorMessage);
+        console.error('Error in accessibility audit:', errorMessage);
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: `Failed to run accessibility audit: ${errorMessage}`,
             },
           ],
@@ -433,8 +433,8 @@ server.tool(
 
 // Add tool for performance audits, launches a headless browser instance
 server.tool(
-  "runPerformanceAudit",
-  "Run a performance audit on the current page",
+  'runPerformanceAudit',
+  'Run a performance audit on the current page',
   {},
   async () => {
     return await withServerConnection(async () => {
@@ -446,14 +446,14 @@ server.tool(
         const response = await fetch(
           `http://${discoveredHost}:${discoveredPort}/performance-audit`,
           {
-            method: "POST",
+            method: 'POST',
             headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
             },
             body: JSON.stringify({
               category: AuditCategory.PERFORMANCE,
-              source: "mcp_tool",
+              source: 'mcp_tool',
               timestamp: Date.now(),
             }),
           }
@@ -481,7 +481,7 @@ server.tool(
           return {
             content: [
               {
-                type: "text",
+                type: 'text',
                 text: JSON.stringify(flattened, null, 2),
               },
             ],
@@ -491,7 +491,7 @@ server.tool(
           return {
             content: [
               {
-                type: "text",
+                type: 'text',
                 text: JSON.stringify(json, null, 2),
               },
             ],
@@ -500,11 +500,11 @@ server.tool(
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        console.error("Error in performance audit:", errorMessage);
+        console.error('Error in performance audit:', errorMessage);
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: `Failed to run performance audit: ${errorMessage}`,
             },
           ],
@@ -516,8 +516,8 @@ server.tool(
 
 // Add tool for SEO audits, launches a headless browser instance
 server.tool(
-  "runSEOAudit",
-  "Run an SEO audit on the current page",
+  'runSEOAudit',
+  'Run an SEO audit on the current page',
   {},
   async () => {
     return await withServerConnection(async () => {
@@ -528,14 +528,14 @@ server.tool(
         const response = await fetch(
           `http://${discoveredHost}:${discoveredPort}/seo-audit`,
           {
-            method: "POST",
+            method: 'POST',
             headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
             },
             body: JSON.stringify({
               category: AuditCategory.SEO,
-              source: "mcp_tool",
+              source: 'mcp_tool',
               timestamp: Date.now(),
             }),
           }
@@ -555,7 +555,7 @@ server.tool(
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: JSON.stringify(json, null, 2),
             },
           ],
@@ -563,11 +563,11 @@ server.tool(
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        console.error("Error in SEO audit:", errorMessage);
+        console.error('Error in SEO audit:', errorMessage);
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: `Failed to run SEO audit: ${errorMessage}`,
             },
           ],
@@ -577,10 +577,10 @@ server.tool(
   }
 );
 
-server.tool("runNextJSAudit", {}, async () => ({
+server.tool('runNextJSAudit', {}, async () => ({
   content: [
     {
-      type: "text",
+      type: 'text',
       text: `
       You are an expert in SEO and web development with NextJS. Given the following procedures for analyzing my codebase, please perform a comprehensive - page by page analysis of our NextJS application to identify any issues or areas of improvement for SEO.
 
@@ -1285,12 +1285,12 @@ server.tool("runNextJSAudit", {}, async () => ({
 }));
 
 server.tool(
-  "runDebuggerMode",
-  "Run debugger mode to debug an issue in our application",
+  'runDebuggerMode',
+  'Run debugger mode to debug an issue in our application',
   async () => ({
     content: [
       {
-        type: "text",
+        type: 'text',
         text: `
       Please follow this exact sequence to debug an issue in our application:
   
@@ -1311,12 +1311,12 @@ server.tool(
 );
 
 server.tool(
-  "runAuditMode",
-  "Run audit mode to optimize our application for SEO, accessibility and performance",
+  'runAuditMode',
+  'Run audit mode to optimize our application for SEO, accessibility and performance',
   async () => ({
     content: [
       {
-        type: "text",
+        type: 'text',
         text: `
       I want you to enter "Audit Mode". Use the following MCP tools one after the other in this exact sequence:
       
@@ -1348,8 +1348,8 @@ server.tool(
 
 // Add tool for Best Practices audits, launches a headless browser instance
 server.tool(
-  "runBestPracticesAudit",
-  "Run a best practices audit on the current page",
+  'runBestPracticesAudit',
+  'Run a best practices audit on the current page',
   {},
   async () => {
     return await withServerConnection(async () => {
@@ -1360,13 +1360,13 @@ server.tool(
         const response = await fetch(
           `http://${discoveredHost}:${discoveredPort}/best-practices-audit`,
           {
-            method: "POST",
+            method: 'POST',
             headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
             },
             body: JSON.stringify({
-              source: "mcp_tool",
+              source: 'mcp_tool',
               timestamp: Date.now(),
             }),
           }
@@ -1391,7 +1391,7 @@ server.tool(
           return {
             content: [
               {
-                type: "text",
+                type: 'text',
                 text: JSON.stringify(flattened, null, 2),
               },
             ],
@@ -1401,7 +1401,7 @@ server.tool(
           return {
             content: [
               {
-                type: "text",
+                type: 'text',
                 text: JSON.stringify(json, null, 2),
               },
             ],
@@ -1410,11 +1410,11 @@ server.tool(
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        console.error("Error in Best Practices audit:", errorMessage);
+        console.error('Error in Best Practices audit:', errorMessage);
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: `Failed to run Best Practices audit: ${errorMessage}`,
             },
           ],
@@ -1428,7 +1428,7 @@ server.tool(
 (async () => {
   try {
     // Attempt initial server discovery
-    console.error("Attempting initial server discovery on startup...");
+    console.error('Attempting initial server discovery on startup...');
     await discoverServer();
     if (serverDiscovered) {
       console.error(
@@ -1436,7 +1436,7 @@ server.tool(
       );
     } else {
       console.error(
-        "Initial server discovery failed. Will try again when tools are used."
+        'Initial server discovery failed. Will try again when tools are used.'
       );
     }
 
@@ -1446,7 +1446,7 @@ server.tool(
     const originalStdoutWrite = process.stdout.write.bind(process.stdout);
     process.stdout.write = (chunk: any, encoding?: any, callback?: any) => {
       // Only allow JSON messages to pass through
-      if (typeof chunk === "string" && !chunk.startsWith("{")) {
+      if (typeof chunk === 'string' && !chunk.startsWith('{')) {
         return true; // Silently skip non-JSON messages
       }
       return originalStdoutWrite(chunk, encoding, callback);
@@ -1454,7 +1454,7 @@ server.tool(
 
     await server.connect(transport);
   } catch (error) {
-    console.error("Failed to initialize MCP server:", error);
+    console.error('Failed to initialize MCP server:', error);
     process.exit(1);
   }
 })();
