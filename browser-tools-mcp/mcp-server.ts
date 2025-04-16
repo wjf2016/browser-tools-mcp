@@ -4,6 +4,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import path from 'path';
 import fs from 'fs';
+const fetch = require('node-fetch');
 
 // Create the MCP server
 const server = new McpServer({
@@ -81,25 +82,37 @@ async function discoverServer(): Promise<boolean> {
       try {
         console.log(`Checking ${host}:${port}...`);
 
-        // Use the identity endpoint for validation
-        const response = await fetch(`http://${host}:${port}/.identity`, {
-          signal: AbortSignal.timeout(1000), // 1 second timeout
-        });
+        // 创建 AbortController 实例
+        const controller = new AbortController();
+        const timeout = setTimeout(() => {
+          controller.abort();
+        }, 1000);
 
-        if (response.ok) {
-          const identity = await response.json();
+        try {
+          // 使用 controller.signal 替代 AbortSignal.timeout()
+          const response = await fetch(`http://${host}:${port}/.identity`, {
+            signal: controller.signal,
+          });
 
-          // Verify this is actually our server by checking the signature
-          if (identity.signature === 'mcp-browser-connector-24x7') {
-            console.log(`Successfully found server at ${host}:${port}`);
+          clearTimeout(timeout); // 清除超时
 
-            // Save the discovered connection
-            discoveredHost = host;
-            discoveredPort = port;
-            serverDiscovered = true;
+          if (response.ok) {
+            const identity = await response.json();
 
-            return true;
+            // Verify this is actually our server by checking the signature
+            if (identity.signature === 'mcp-browser-connector-24x7') {
+              console.log(`Successfully found server at ${host}:${port}`);
+
+              // Save the discovered connection
+              discoveredHost = host;
+              discoveredPort = port;
+              serverDiscovered = true;
+
+              return true;
+            }
           }
+        } finally {
+          clearTimeout(timeout); // 确保timeout被清除
         }
       } catch (error: any) {
         // Ignore connection errors during discovery
